@@ -13,7 +13,8 @@
             {  
             outline:0;  
             }  
-        </style>
+				</style>
+				<script src="https://raw.github.com/gist/1579671/7f515ade253afbc860dac1f84e21998d54359d79/rAF.js"></script>
         <script type="text/javascript">
 var canvasWidth = 640;
 var thisXPos = 0;
@@ -221,26 +222,23 @@ var startup = function() {
   rs = new rainSystem;
   rs.setup();
 
+	var last_time;
 
-  this.timeManagement = function() {
-      var now = new Date().getTime();
-      // time since last game logic
-      var timeDelta = now - lastGameCycleTime;
-      
-      rs.rainCycle(timeDelta)
+	function timeManagement(rendering_time) {
+		var time_delta;
 
-      var cycleDelay = gameCycleDelay;
-      // the timer will likely not run that fast due to the rendering cycle hogging the cpu
-      // so figure out how much time was lost since last cycle
-      if (timeDelta > cycleDelay) {
-        cycleDelay = Math.max(1, cycleDelay - (timeDelta - cycleDelay))
-      }
+		if (last_time === undefined) {
+			last_time = new Date().getTime();
+		}
+		time_delta = rendering_time - last_time;
+		last_time = rendering_time;
 
-      lastGameCycleTime = now;
-      setTimeout(this.timeManagement, cycleDelay);
+		rs.rainCycle(time_delta);
+
+		window.requestAnimationFrame(timeManagement);
   }
 
-  this.timeManagement();
+	window.requestAnimationFrame(timeManagement);
 }
 
         </script>
