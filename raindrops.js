@@ -1,3 +1,34 @@
+// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+
+// requestAnimationFrame polyfill by Erik Möller
+// fixes from Paul Irish and Tino Zijdel
+
+(function() {
+    var lastTime = 0;
+    var vendors = ['ms', 'moz', 'webkit', 'o'];
+    for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+        window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+        window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
+                                   || window[vendors[x]+'CancelRequestAnimationFrame'];
+    }
+ 
+    if (!window.requestAnimationFrame)
+        window.requestAnimationFrame = function(callback, element) {
+            var currTime = new Date().getTime();
+            var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+            var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
+              timeToCall);
+            lastTime = currTime + timeToCall;
+            return id;
+        };
+ 
+    if (!window.cancelAnimationFrame)
+        window.cancelAnimationFrame = function(id) {
+            clearTimeout(id);
+        };
+}());
+
 var canvasWidth = 640;
 var thisXPos = 0;
 var canvasHeight = 400;
@@ -9,7 +40,6 @@ var rain = [];
 var rainImg = "images/raindrop.gif";
 var bgImg = null;
 var i;
-
 
 
 var avgRainHeight = 46;
@@ -29,7 +59,7 @@ var varXVelocity = 0;
 
 var renderTimeout = 100;
 
-var varianceFactor = 6;
+var varianceFactor = 12;
 
 //a larger distance value means it's closer to the window
 var maxDistance = varianceFactor;
@@ -148,13 +178,13 @@ function rainSystem() {
       canvas = document.getElementById("gameCanvas");
       context = canvas.getContext("2d");
 
+
       //TODO: try to get rid of this offset
       canvasWidth = window.innerWidth - 15;
       canvasHeight = window.innerHeight - 15;
 
       canvas.width = canvasWidth;
       canvas.height = canvasHeight;
-
 
       for (i = 0; i < howManyDrops; i++) {
         this.drops.push( new rainDrop() );
@@ -204,15 +234,17 @@ var startup = function() {
 	var last_time;
 
 	function timeManagement(rendering_time) {
-		var time_delta;
+    // Really ugly hack until I can figure out why
+    // such small values are passed here initially in chrome
+    var time_delta;
 
-		if (last_time === undefined) {
-			last_time = new Date().getTime();
-		}
-		time_delta = rendering_time - last_time;
-		last_time = rendering_time;
+    if (last_time === undefined) {
+      last_time = rendering_time;
+    }
+    time_delta = rendering_time - last_time;
+    last_time = rendering_time;
 
-		rs.rainCycle(time_delta);
+    rs.rainCycle(time_delta);
 
 		window.requestAnimationFrame(timeManagement);
   }
